@@ -722,7 +722,7 @@ public final class Monarchy {
          *
          * @param query the query
          */
-        public final void updateQuery(final Query<T> query) {
+        public void updateQuery(final Query<T> query) {
             Handler handler = monarchy.handler.get();
             if(handler == null) {
                 return;
