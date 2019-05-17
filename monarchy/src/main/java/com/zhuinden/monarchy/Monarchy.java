@@ -640,7 +640,7 @@ public final class Monarchy {
         }
     }
 
-    static class RealmTiledDataSource<T extends RealmModel>
+    public static class RealmTiledDataSource<T extends RealmModel>
             extends TiledDataSource<T> {
         final Monarchy monarchy;
         final LiveResults<T> liveResults;
@@ -698,12 +698,12 @@ public final class Monarchy {
      *
      * @param <T> the type of the RealmModel
      */
-    public static final class RealmDataSourceFactory<T extends RealmModel>
+    public static class RealmDataSourceFactory<T extends RealmModel>
             extends DataSource.Factory<Integer, T> {
         final Monarchy monarchy;
         final PagedLiveResults<T> pagedLiveResults;
 
-        RealmDataSourceFactory(Monarchy monarchy, PagedLiveResults<T> pagedLiveResults) {
+        public RealmDataSourceFactory(Monarchy monarchy, PagedLiveResults<T> pagedLiveResults) {
             this.monarchy = monarchy;
             this.pagedLiveResults = pagedLiveResults;
         }
