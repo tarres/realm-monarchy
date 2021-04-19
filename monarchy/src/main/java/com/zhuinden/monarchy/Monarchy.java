@@ -1,19 +1,10 @@
 package com.zhuinden.monarchy;
 
-import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MediatorLiveData;
-import android.arch.lifecycle.Observer;
-import android.arch.paging.DataSource;
-import android.arch.paging.LivePagedListBuilder;
-import android.arch.paging.PagedList;
-import android.arch.paging.PositionalDataSource;
+
 import android.content.Context;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.WorkerThread;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,6 +17,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
 import io.realm.OrderedCollectionChangeSet;
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
@@ -37,11 +33,11 @@ import io.realm.RealmResults;
 
 /**
  * Monarchy is a wrapper around Realm that simplifies its lifecycle management, and leverages the power of LiveData.
- *
+ * <p>
  * Not only does it auto-manage the Realm lifecycle, but specifically prevents the ability to use Realm in such a way that it is impossible to leave a Realm instance open by accident.
- *
+ * <p>
  * In case of `copied`, `mapped`, or `paged` results, the queries are evaluated on a background looper thread.
- *
+ * <p>
  * In case of `managed` results, the RealmResults is provided along with its change set.
  */
 public final class Monarchy {
@@ -56,7 +52,7 @@ public final class Monarchy {
         private final RealmResults<T> realmResults;
         private final OrderedCollectionChangeSet orderedCollectionChangeSet;
 
-        ManagedChangeSet(RealmResults<T> realmResults, OrderedCollectionChangeSet orderedCollectionChangeSet) {
+        ManagedChangeSet(@Nonnull RealmResults<T> realmResults, @Nonnull OrderedCollectionChangeSet orderedCollectionChangeSet) {
             this.realmResults = realmResults;
             this.orderedCollectionChangeSet = orderedCollectionChangeSet;
         }
@@ -66,6 +62,7 @@ public final class Monarchy {
          *
          * @return the RealmResults
          */
+        @Nonnull
         public RealmResults<T> getRealmResults() {
             return realmResults;
         }
@@ -75,7 +72,7 @@ public final class Monarchy {
          *
          * @return the change set
          */
-        @NonNull
+        @Nonnull
         public OrderedCollectionChangeSet getOrderedCollectionChangeSet() {
             return orderedCollectionChangeSet;
         }
@@ -90,7 +87,7 @@ public final class Monarchy {
      *
      * @param context app context
      */
-    public static void init(Context context) {
+    public static void init(@Nonnull Context context) {
         Realm.init(context);
         invalidDefaultConfig = new RealmConfiguration.Builder().build();
         Realm.setDefaultConfiguration(invalidDefaultConfig);
@@ -101,7 +98,7 @@ public final class Monarchy {
      *
      * @param realmConfiguration realm configuration
      */
-    public static void setDefaultConfiguration(RealmConfiguration realmConfiguration) {
+    public static void setDefaultConfiguration(@Nonnull RealmConfiguration realmConfiguration) {
         Realm.setDefaultConfiguration(realmConfiguration);
     }
 
@@ -111,9 +108,10 @@ public final class Monarchy {
      * @return the custom default configuration
      * @throws IllegalStateException if the invalid default configuration is still set.
      */
+    @Nonnull
     public static RealmConfiguration getDefaultConfiguration() {
         final RealmConfiguration config = Realm.getDefaultConfiguration();
-        if(config == invalidDefaultConfig) {
+        if(config == invalidDefaultConfig || config == null) {
             throw new IllegalStateException("No default configuration is set!");
         }
         return config;
@@ -121,14 +119,14 @@ public final class Monarchy {
 
     private volatile RealmConfiguration realmConfiguration = null;
 
-    Monarchy(RealmConfiguration configuration, Executor writeScheduler) {
+    Monarchy(@Nonnull RealmConfiguration configuration, @Nonnull Executor writeScheduler) {
         this.realmConfiguration = configuration;
         this.writeScheduler = writeScheduler;
     }
 
     /**
      * Builder class used to build a Monarchy instance.
-     *
+     * <p>
      * You should only have a singleton instance of Monarchy.
      */
     public static class Builder {
@@ -139,29 +137,37 @@ public final class Monarchy {
             this.realmConfiguration = Realm.getDefaultConfiguration();
         }
 
-        public Builder setRealmConfiguration(RealmConfiguration realmConfiguration) {
+        @Nonnull
+        public Builder setRealmConfiguration(@Nullable RealmConfiguration realmConfiguration) {
             this.realmConfiguration = realmConfiguration;
             return this;
         }
 
-        public Builder setWriteAsyncExecutor(Executor executor) {
+        @Nonnull
+        public Builder setWriteAsyncExecutor(@Nonnull Executor executor) {
+            //noinspection ConstantConditions
+            if(executor == null) {
+                throw new IllegalArgumentException("executor should not be null!");
+            }
             this.writeScheduler = executor;
             return this;
         }
 
+        @Nonnull
         public Monarchy build() {
             return new Monarchy(realmConfiguration, writeScheduler);
         }
     }
 
+    @Nonnull
     public final RealmConfiguration getRealmConfiguration() {
         return this.realmConfiguration == null ? getDefaultConfiguration() : this.realmConfiguration;
     }
 
-    public final void runTransactionSync(final Realm.Transaction transaction) {
+    public final void runTransactionSync(@Nonnull final Realm.Transaction transaction) {
         doWithRealm(new RealmBlock() {
             @Override
-            public void doWithRealm(Realm realm) {
+            public void doWithRealm(@NonNull Realm realm) {
                 realm.executeTransaction(transaction);
             }
         });
@@ -186,7 +192,7 @@ public final class Monarchy {
     };
 
     // CALL THIS SYNC ON MONARCHY THREAD
-    <T extends RealmModel> void createAndObserveRealmQuery(final LiveResults<T> liveResults) {
+    <T extends RealmModel> void createAndObserveRealmQuery(@Nullable final LiveResults<T> liveResults) {
         Realm realm = realmThreadLocal.get();
         checkRealmValid(realm);
         if(liveResults == null) {
@@ -196,14 +202,14 @@ public final class Monarchy {
         resultsRefs.get().put(liveResults, results);
         results.addChangeListener(new RealmChangeListener<RealmResults<T>>() {
             @Override
-            public void onChange(@NonNull RealmResults<T> realmResults) {
-                liveResults.updateResults(realmResults.createSnapshot());
+            public void onChange(@Nonnull RealmResults<T> realmResults) {
+                liveResults.updateResults(realmResults);
             }
         });
     }
 
     // CALL THIS SYNC ON MONARCHY THREAD
-    <T extends RealmModel> void destroyRealmQuery(final LiveResults<T> liveResults) {
+    <T extends RealmModel> void destroyRealmQuery(@Nullable final LiveResults<T> liveResults) {
         Realm realm = realmThreadLocal.get();
         checkRealmValid(realm);
         if(liveResults == null) {
@@ -278,7 +284,7 @@ public final class Monarchy {
         });
     }
 
-    private void checkRealmValid(Realm realm) {
+    private void checkRealmValid(@Nullable Realm realm) {
         if(realm == null || realm.isClosed()) {
             throw new IllegalStateException("Unexpected state: Realm is not open");
         }
@@ -290,7 +296,8 @@ public final class Monarchy {
      * @param <T> the realm class
      */
     public interface Query<T extends RealmModel> {
-        RealmQuery<T> createQuery(Realm realm);
+        @Nonnull
+        RealmQuery<T> createQuery(@Nonnull Realm realm);
     }
 
     /**
@@ -300,7 +307,8 @@ public final class Monarchy {
      * @param <T> the type to map from
      */
     public interface Mapper<R, T> {
-        R map(T from);
+        // R is platform type on purpose
+        R map(@Nonnull T from);
     }
 
     /**
@@ -308,7 +316,7 @@ public final class Monarchy {
      *
      * @param realmBlock the Realm execution block in which Realm should remain open
      */
-    public final void doWithRealm(final RealmBlock realmBlock) {
+    public final void doWithRealm(@Nonnull final RealmBlock realmBlock) {
         RealmConfiguration configuration = getRealmConfiguration();
         Realm realm = null;
         try {
@@ -326,7 +334,7 @@ public final class Monarchy {
      *
      * @param transaction the Realm transaction
      */
-    public final void writeAsync(final Realm.Transaction transaction) {
+    public final void writeAsync(@Nonnull final Realm.Transaction transaction) {
         writeScheduler.execute(new Runnable() {
             @Override
             public void run() {
@@ -339,14 +347,14 @@ public final class Monarchy {
      * Interface to define what to do with the Realm instance.
      */
     public interface RealmBlock {
-        void doWithRealm(Realm realm);
+        void doWithRealm(@Nonnull Realm realm);
     }
 
     /**
      * Provides ability to synchronously obtain a managed RealmResults as a List, in a safe way.
-     *
+     * <p>
      * What is actually returned is a snapshot collection.
-     *
+     * <p>
      * This method only makes sense either if Realm is opened manually, or inside a {@link Monarchy#doWithRealm(RealmBlock)} (or {@link Monarchy#runTransactionSync(Realm.Transaction)} method).
      *
      * @param realm Realm
@@ -354,7 +362,8 @@ public final class Monarchy {
      * @param <T>   RealmObject type
      * @return the snapshot collection
      */
-    public <T extends RealmModel> List<T> fetchAllManagedSync(Realm realm, Query<T> query) {
+    @Nonnull
+    public <T extends RealmModel> List<T> fetchAllManagedSync(@Nonnull Realm realm, @Nonnull Query<T> query) {
         return query.createQuery(realm).findAll().createSnapshot();
     }
 
@@ -365,11 +374,12 @@ public final class Monarchy {
      * @param <T>   RealmObject type
      * @return the copied list
      */
-    public <T extends RealmModel> List<T> fetchAllCopiedSync(final Query<T> query) {
+    @Nonnull
+    public <T extends RealmModel> List<T> fetchAllCopiedSync(@Nonnull final Query<T> query) {
         final AtomicReference<List<T>> ref = new AtomicReference<>();
         doWithRealm(new RealmBlock() {
             @Override
-            public void doWithRealm(Realm realm) {
+            public void doWithRealm(@NonNull Realm realm) {
                 ref.set(realm.copyFromRealm(query.createQuery(realm).findAll()));
             }
         });
@@ -384,11 +394,12 @@ public final class Monarchy {
      * @param <U>   the mapped type
      * @return the copied list
      */
-    public <T extends RealmModel, U> List<U> fetchAllMappedSync(final Query<T> query, final Mapper<U, T> mapper) {
+    @Nonnull
+    public <T extends RealmModel, U> List<U> fetchAllMappedSync(@Nonnull final Query<T> query, @Nonnull final Mapper<U, T> mapper) {
         final AtomicReference<List<U>> ref = new AtomicReference<>();
         doWithRealm(new RealmBlock() {
             @Override
-            public void doWithRealm(Realm realm) {
+            public void doWithRealm(@NonNull Realm realm) {
                 RealmResults<T> results = query.createQuery(realm).findAll();
                 List<U> list = new ArrayList<>(results.size());
                 for(T t : results) {
@@ -402,21 +413,53 @@ public final class Monarchy {
 
     /**
      * Returns a LiveData that evaluates the new results on a background looper thread. The observer receives new data when the database changes.
-     *
+     * <p>
      * The items are copied out with `realm.copyFromRealm(results)`.
      *
      * @param query the query
      * @param <T>   the RealmModel type
      * @return the LiveData
      */
-    public <T extends RealmModel> LiveData<List<T>> findAllCopiedWithChanges(Query<T> query) {
+    @Nonnull
+    public <T extends RealmModel> LiveData<List<T>> findAllCopiedWithChanges(@Nonnull Query<T> query) {
         assertMainThread();
-        return new CopiedLiveResults<>(this, query);
+        return new CopiedLiveResults<>(this, query, Integer.MAX_VALUE);
     }
 
     /**
      * Returns a LiveData that evaluates the new results on a background looper thread. The observer receives new data when the database changes.
+     * <p>
+     * The items are copied out with `realm.copyFromRealm(results, maxDepth)`.
      *
+     * @param maxDepth the max depth
+     * @param query    the query
+     * @param <T>      the RealmModel type
+     * @return the LiveData
+     */
+    @Nonnull
+    public <T extends RealmModel> LiveData<List<T>> findAllCopiedWithChanges(int maxDepth, @Nonnull Query<T> query) {
+        assertMainThread();
+        return new CopiedLiveResults<>(this, query, maxDepth);
+    }
+
+    /**
+     * Returns a LiveData that evaluates the new results on a background looper thread. The observer receives new data when the database changes.
+     * <p>
+     * The items are frozen with `realmResults.freeze()`.
+     *
+     * @param query the query
+     * @param <T>   the RealmModel type
+     * @return the LiveData
+     */
+    @Nonnull
+    public <T extends RealmModel> LiveData<List<T>> findAllFrozenWithChanges(@Nonnull Query<T> query) {
+        assertMainThread();
+        return new FrozenLiveResults<>(this, query);
+    }
+
+    /**
+     * Returns a LiveData that evaluates the new results on a background looper thread. The observer receives new data when the database changes.
+     * <p>
      * The items are mapped out with the provided {@link Mapper}.
      *
      * @param query the query
@@ -424,39 +467,43 @@ public final class Monarchy {
      * @param <U>   the mapped type
      * @return the LiveData
      */
-    public <T extends RealmModel, U> LiveData<List<U>> findAllMappedWithChanges(Query<T> query, Mapper<U, T> mapper) {
+    @Nonnull
+    public <T extends RealmModel, U> LiveData<List<U>> findAllMappedWithChanges(@Nonnull Query<T> query, @Nonnull Mapper<U, T> mapper) {
         assertMainThread();
         return new MappedLiveResults<>(this, query, mapper);
     }
 
-    private <T extends RealmModel> LiveData<ManagedChangeSet<T>> findAllManagedWithChanges(Query<T> query, boolean asAsync) {
+    @Nonnull
+    private <T extends RealmModel> LiveData<ManagedChangeSet<T>> findAllManagedWithChanges(@Nonnull Query<T> query, boolean asAsync) {
         assertMainThread();
         return new ManagedLiveResults<>(this, query, asAsync);
     }
 
     /**
      * Returns a LiveData that evaluates the new results on the UI thread, using Realm's Async Query API. The observer receives new data when the database changes.
-     *
+     * <p>
      * The managed change set contains the OrderedCollectionChangeSet evaluated by Realm.
      *
      * @param query the query
      * @param <T>   the RealmModel type
      * @return the LiveData
      */
-    public <T extends RealmModel> LiveData<ManagedChangeSet<T>> findAllManagedWithChanges(Query<T> query) {
+    @Nonnull
+    public <T extends RealmModel> LiveData<ManagedChangeSet<T>> findAllManagedWithChanges(@Nonnull Query<T> query) {
         return findAllManagedWithChanges(query, true);
     }
 
     /**
      * Returns a LiveData that evaluates the new results on the UI thread, using Realm's Sync Query API. The observer receives new data when the database changes.
-     *
+     * <p>
      * The managed change set contains the OrderedCollectionChangeSet evaluated by Realm.
      *
      * @param query the query
      * @param <T>   the RealmModel type
      * @return the LiveData
      */
-    public <T extends RealmModel> LiveData<ManagedChangeSet<T>> findAllManagedWithChangesSync(Query<T> query) {
+    @Nonnull
+    public <T extends RealmModel> LiveData<ManagedChangeSet<T>> findAllManagedWithChangesSync(@Nonnull Query<T> query) {
         return findAllManagedWithChanges(query, false);
     }
 
@@ -475,14 +522,15 @@ public final class Monarchy {
 
     /**
      * If the Monarchy thread was opened manually, then this method can be used to decrement the forced reference count increment.
-     *
+     * <p>
      * This means that the Monarchy thread does not stop unless all observed LiveData are also inactive.
      */
     public void closeManually() {
         if(isForcedOpen.compareAndSet(true, false)) {
             stopListening(null);
         } else {
-            throw new IllegalStateException("Cannot close Monarchy thread manually if it was not opened manually.");
+            throw new IllegalStateException(
+                    "Cannot close Monarchy thread manually if it was not opened manually.");
         }
     }
 
@@ -503,10 +551,11 @@ public final class Monarchy {
      * @param realmBlock the Realm block
      * @throws IllegalStateException if the Monarchy thread is not open
      */
-    public void postToMonarchyThread(final RealmBlock realmBlock) {
+    public void postToMonarchyThread(@Nonnull final RealmBlock realmBlock) {
         final Handler _handler = handler.get();
         if(_handler == null) {
-            throw new IllegalStateException("Cannot post to Monarchy thread when the Monarchy thread is not open.");
+            throw new IllegalStateException(
+                    "Cannot post to Monarchy thread when the Monarchy thread is not open.");
         } else {
             _handler.post(new Runnable() {
                 @Override

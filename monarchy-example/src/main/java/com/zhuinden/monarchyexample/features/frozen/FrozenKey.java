@@ -1,22 +1,22 @@
-package com.zhuinden.monarchyexample.features.managed;
+package com.zhuinden.monarchyexample.features.frozen;
 
 import com.google.auto.value.AutoValue;
 import com.zhuinden.monarchyexample.utils.BaseFragment;
 import com.zhuinden.monarchyexample.utils.BaseKey;
 
 /**
- * Created by Zhuinden on 2017.12.21..
+ * Created by Zhuinden on 2020.06.25.
  */
 
 @AutoValue
-public abstract class ManagedKey
+public abstract class FrozenKey
         extends BaseKey {
     @Override
     protected BaseFragment instantiateFragment() {
-        return new ManagedFragment();
+        return new FrozenFragment();
     }
 
-    public static ManagedKey create() {
-        return new AutoValue_ManagedKey();
+    public static FrozenKey create() {
+        return new AutoValue_FrozenKey();
     }
 }

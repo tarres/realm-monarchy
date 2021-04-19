@@ -1,28 +1,32 @@
-package com.zhuinden.monarchyexample.features.paged;
+package com.zhuinden.monarchyexample.features.frozen;
 
-import android.arch.paging.PagedListAdapter;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.zhuinden.monarchyexample.Dog;
 import com.zhuinden.monarchyexample.R;
+import com.zhuinden.monarchyexample.RealmDog;
 
+import java.util.List;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 /**
- * Created by Zhuinden on 2017.12.21..
+ * Created by Zhuinden on 2020.06.25.
  */
 
-class PagedDogAdapter
-        extends PagedListAdapter<Dog, PagedDogAdapter.ViewHolder> {
-    public PagedDogAdapter() {
-        super(Dog.ITEM_CALLBACK);
+class FrozenDogAdapter
+        extends RecyclerView.Adapter<FrozenDogAdapter.ViewHolder> {
+    private List<RealmDog> items;
+
+    public FrozenDogAdapter() {
     }
 
+    @NonNull
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.view_dog, parent, false));
@@ -30,10 +34,18 @@ class PagedDogAdapter
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        Dog dog = getItem(position);
-        if(dog != null) {
-            holder.bind(dog);
-        }
+        holder.bind(items.get(position));
+    }
+
+    @Override
+    public int getItemCount() {
+        return items == null ? 0 : items.size();
+    }
+
+    @Deprecated
+    public void updateData(List<RealmDog> items) {
+        this.items = items;
+        notifyDataSetChanged(); // TODO: use DiffUtil
     }
 
     public static class ViewHolder
@@ -46,8 +58,8 @@ class PagedDogAdapter
             ButterKnife.bind(this, itemView);
         }
 
-        public void bind(Dog dog) {
-            textView.setText(dog.name());
+        public void bind(RealmDog dog) {
+            textView.setText(dog.getName());
         }
     }
 }

@@ -1,14 +1,7 @@
-package com.zhuinden.monarchyexample.features.copied;
+package com.zhuinden.monarchyexample.features.frozen;
 
 import android.content.Context;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.Observer;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,14 +16,20 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 /**
- * Created by Zhuinden on 2017.12.21..
+ * Created by Zhuinden on 2020.06.25.
  */
 
-public class CopiedFragment
+public class FrozenFragment
         extends BaseFragment {
     @BindView(R.id.recycler_view)
     RecyclerView recyclerView;
@@ -38,10 +37,10 @@ public class CopiedFragment
     @Inject
     Monarchy monarchy;
 
-    CopiedDogAdapter copiedDogAdapter;
+    FrozenDogAdapter frozenDogAdapter;
     LiveData<List<RealmDog>> dogs;
     Observer<List<RealmDog>> observer = dogs -> {
-        copiedDogAdapter.updateData(dogs);
+        frozenDogAdapter.updateData(dogs);
     };
 
     @Override
@@ -53,19 +52,19 @@ public class CopiedFragment
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_copied, container, false);
+        return inflater.inflate(R.layout.fragment_frozen, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ButterKnife.bind(this, view);
-        copiedDogAdapter = new CopiedDogAdapter();
+        frozenDogAdapter = new FrozenDogAdapter();
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false));
-        recyclerView.setAdapter(copiedDogAdapter);
+        recyclerView.setAdapter(frozenDogAdapter);
 
-        dogs = monarchy.findAllCopiedWithChanges(realm -> realm.where(RealmDog.class));
+        dogs = monarchy.findAllFrozenWithChanges(realm -> realm.where(RealmDog.class));
         dogs.observeForever(observer); // detach != destroy in fragments so this is manual
     }
 
