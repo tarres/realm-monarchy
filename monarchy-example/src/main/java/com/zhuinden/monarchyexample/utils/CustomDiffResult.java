@@ -1,6 +1,6 @@
 package com.zhuinden.monarchyexample.utils;
 
-import androidx.recyclerview.widget.RecyclerView;
+import android.support.v7.widget.RecyclerView;
 
 public interface CustomDiffResult {
     void dispatchUpdatesTo(RecyclerView.Adapter<?> adapter);

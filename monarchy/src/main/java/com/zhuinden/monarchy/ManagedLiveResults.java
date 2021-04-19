@@ -1,9 +1,10 @@
 package com.zhuinden.monarchy;
 
-import javax.annotation.Nonnull;
+import android.arch.lifecycle.MutableLiveData;
+import android.support.annotation.NonNull;
+
 import javax.annotation.Nullable;
 
-import androidx.lifecycle.MutableLiveData;
 import io.realm.OrderedCollectionChangeSet;
 import io.realm.OrderedRealmCollectionChangeListener;
 import io.realm.Realm;
@@ -62,6 +63,11 @@ class ManagedLiveResults<T extends RealmModel>
         public Throwable getError() {
             return null;
         }
+
+        @Override
+        public boolean isCompleteResult() {
+            return true;
+        }
     }
     
     private final Monarchy monarchy;
@@ -72,7 +78,7 @@ class ManagedLiveResults<T extends RealmModel>
 
     private OrderedRealmCollectionChangeListener<RealmResults<T>> realmChangeListener = new OrderedRealmCollectionChangeListener<RealmResults<T>>() {
         @Override
-        public void onChange(@Nonnull RealmResults<T> realmResults, @Nonnull OrderedCollectionChangeSet changeSet) {
+        public void onChange(@NonNull RealmResults<T> realmResults, @NonNull OrderedCollectionChangeSet changeSet) {
             Monarchy.ManagedChangeSet<T> managedChangeSet = new Monarchy.ManagedChangeSet<>(realmResults, changeSet);
             if(!asAsync && changeSet.getState() == OrderedCollectionChangeSet.State.INITIAL) {
                 setValue(managedChangeSet);

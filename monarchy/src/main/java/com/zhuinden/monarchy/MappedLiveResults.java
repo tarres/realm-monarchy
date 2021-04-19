@@ -1,12 +1,12 @@
 package com.zhuinden.monarchy;
 
+import android.arch.lifecycle.MutableLiveData;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import androidx.annotation.NonNull;
-import androidx.lifecycle.MutableLiveData;
 import io.realm.OrderedRealmCollection;
 import io.realm.Realm;
 import io.realm.RealmModel;
@@ -16,8 +16,7 @@ import io.realm.RealmResults;
  * Created by Zhuinden on 2017.12.17..
  */
 
-class MappedLiveResults<T extends RealmModel, U> extends MutableLiveData<List<U>>
-        implements LiveResults<T> {
+class MappedLiveResults<T extends RealmModel, U> extends MutableLiveData<List<U>> implements LiveResults<T> {
     private final Monarchy monarchy;
     private final Monarchy.Query<T> query;
     private final Monarchy.Mapper<U, T> mapper;
@@ -51,12 +50,12 @@ class MappedLiveResults<T extends RealmModel, U> extends MutableLiveData<List<U>
     public void updateResults(final OrderedRealmCollection<T> realmResults) {
         monarchy.doWithRealm(new Monarchy.RealmBlock() {
             @Override
-            public void doWithRealm(@NonNull Realm realm) {
-                List<U> list = new ArrayList<>(realmResults.size());
+            public void doWithRealm(Realm realm) {
+                List<U> list = new LinkedList<>();
                 for(T t: realmResults) {
                     list.add(mapper.map(t));
                 }
-                postValue(Collections.unmodifiableList(list));
+                postValue(Collections.unmodifiableList(new ArrayList<U>(list)));
             }
         });
     }

@@ -1,4 +1,4 @@
-package com.zhuinden.monarchyexample.features.home;
+package com.zhuinden.monarchyexample.features.paged;
 
 import com.google.auto.value.AutoValue;
 import com.zhuinden.monarchyexample.utils.BaseFragment;
@@ -9,13 +9,14 @@ import com.zhuinden.monarchyexample.utils.BaseKey;
  */
 
 @AutoValue
-public abstract class HomeKey extends BaseKey {
+public abstract class PagedKey
+        extends BaseKey {
     @Override
     protected BaseFragment createFragment() {
-        return new HomeFragment();
+        return new PagedFragment();
     }
 
-    public static HomeKey create() {
-        return new AutoValue_HomeKey();
+    public static PagedKey create() {
+        return new AutoValue_PagedKey();
     }
 }

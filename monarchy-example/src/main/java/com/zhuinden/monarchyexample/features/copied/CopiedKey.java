@@ -12,7 +12,7 @@ import com.zhuinden.monarchyexample.utils.BaseKey;
 public abstract class CopiedKey
         extends BaseKey {
     @Override
-    protected BaseFragment instantiateFragment() {
+    protected BaseFragment createFragment() {
         return new CopiedFragment();
     }
 

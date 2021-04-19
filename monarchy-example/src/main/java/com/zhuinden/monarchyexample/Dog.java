@@ -1,8 +1,8 @@
 package com.zhuinden.monarchyexample;
 
-import com.google.auto.value.AutoValue;
+import android.support.v7.util.DiffUtil;
 
-import androidx.recyclerview.widget.DiffUtil;
+import com.google.auto.value.AutoValue;
 
 /**
  * Created by Zhuinden on 2017.12.17..

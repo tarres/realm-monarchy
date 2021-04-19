@@ -1,8 +1,8 @@
 package com.zhuinden.monarchyexample.utils;
 
-import java.util.List;
+import android.support.v7.util.DiffUtil;
 
-import androidx.recyclerview.widget.DiffUtil;
+import java.util.List;
 
 /**
  * Created by Zhuinden on 2017.12.21..

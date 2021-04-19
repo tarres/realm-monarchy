@@ -5,6 +5,8 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.NonNull;
+import android.support.v7.app.AppCompatActivity;
 import android.view.MotionEvent;
 
 import com.zhuinden.monarchy.Monarchy;
@@ -14,19 +16,20 @@ import com.zhuinden.monarchyexample.RealmDog;
 import com.zhuinden.monarchyexample.application.injection.ApplicationComponent;
 import com.zhuinden.monarchyexample.features.home.HomeKey;
 import com.zhuinden.monarchyexample.utils.BaseKey;
+import com.zhuinden.monarchyexample.utils.FragmentStateChanger;
 import com.zhuinden.simplestack.BackstackDelegate;
 import com.zhuinden.simplestack.History;
 import com.zhuinden.simplestack.StateChange;
 import com.zhuinden.simplestack.StateChanger;
-import com.zhuinden.simplestackextensions.fragments.DefaultFragmentStateChanger;
 
 import java.util.List;
 
-import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
-import androidx.appcompat.app.AppCompatActivity;
 import butterknife.ButterKnife;
+import io.realm.Realm;
+import io.realm.RealmModel;
+import io.realm.RealmQuery;
 
 public class MainActivity
         extends AppCompatActivity
@@ -36,7 +39,7 @@ public class MainActivity
     private boolean isAnimating = false;
 
     BackstackDelegate backstackDelegate;
-    DefaultFragmentStateChanger fragmentStateChanger;
+    FragmentStateChanger fragmentStateChanger;
     Handler handler = new Handler(Looper.getMainLooper());
 
     @Inject
@@ -58,7 +61,7 @@ public class MainActivity
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        fragmentStateChanger = new DefaultFragmentStateChanger(getSupportFragmentManager(), R.id.root);
+        fragmentStateChanger = new FragmentStateChanger(getSupportFragmentManager(), R.id.root);
 
         backstackDelegate.setStateChanger(this);
 
@@ -139,8 +142,8 @@ public class MainActivity
     }
 
     @Override
-    public void handleStateChange(@Nonnull StateChange stateChange, @Nonnull Callback completionCallback) {
-        if(stateChange.topNewKey().equals(stateChange.topPreviousKey())) {
+    public void handleStateChange(@NonNull StateChange stateChange, @NonNull Callback completionCallback) {
+        if(stateChange.topNewState().equals(stateChange.topPreviousState())) {
             completionCallback.stateChangeComplete();
             return;
         }
@@ -156,7 +159,7 @@ public class MainActivity
     // -------------------------------------------------------------------------------------------------
     // I'm actually just bored so I'm setting up what were essentially MortarScopes back in the day, lol
     @Override
-    public Object getSystemService(@Nonnull String name) {
+    public Object getSystemService(@NonNull String name) {
         if(TAG.equals(name)) {
             return this;
         }

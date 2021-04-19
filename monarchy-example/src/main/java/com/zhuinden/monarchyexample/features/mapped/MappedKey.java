@@ -16,7 +16,7 @@ public abstract class MappedKey
     }
 
     @Override
-    protected BaseFragment instantiateFragment() {
+    protected BaseFragment createFragment() {
         return new MappedFragment();
     }
 }
